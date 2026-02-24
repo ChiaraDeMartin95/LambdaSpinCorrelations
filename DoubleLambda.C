@@ -40,6 +40,7 @@
 #include <iostream> // needed for io
 #include <time.h>   /* time */
 #include <valarray>
+#include <chrono>
 // #include <yaml.h>
 // #include <stdio.h>
 // #include <glib.h>
@@ -50,6 +51,7 @@ using namespace Pythia8;
 int DoubleLambda(int nEvents = 1000)
 {
 
+    auto start = std::chrono::high_resolution_clock::now();
     // Read JOBID from environment to set unique random seeds per job
     int jobid = 0;
     if (const char *env_p = std::getenv("JOBID"))
@@ -80,30 +82,43 @@ int DoubleLambda(int nEvents = 1000)
 
     TTree *fTreeEvent;
     Int_t TreemultLambda;
+    Int_t TreechargeLambda[1000];
+    Int_t TreeAncestorIndexLambda[1000];
     Float_t TreeLambdaPx[1000];
     Float_t TreeLambdaPy[1000];
     Float_t TreeLambdaPz[1000];
     Float_t TreeLambdaMass[1000];
+    Float_t TreeLambdaEta[1000];
+    Float_t TreeLambdaPhi[1000];
     Int_t TreeLambdaMother1[10000];
     Int_t TreeLambdaMother2[10000];
     Int_t TreeLambdaMother1ID[1000];
     Int_t TreeLambdaMother2ID[1000];
-    Int_t TreechargeLambda[1000];
+    Bool_t TreePrimaryLambda[1000];
+
     Int_t TreemultAntiLambda;
     Float_t TreechargeAntiLambda[1000];
+    Int_t TreeAncestorIndexAntiLambda[1000];
     Float_t TreeAntiLambdaPx[1000];
     Float_t TreeAntiLambdaPy[1000];
     Float_t TreeAntiLambdaPz[1000];
     Float_t TreeAntiLambdaMass[1000];
+    Float_t TreeAntiLambdaEta[1000];
+    Float_t TreeAntiLambdaPhi[1000];
     Int_t TreeAntiLambdaMother1[10000];
     Int_t TreeAntiLambdaMother2[10000];
     Int_t TreeAntiLambdaMother1ID[1000];
     Int_t TreeAntiLambdaMother2ID[1000];
+    Bool_t TreePrimaryAntiLambda[1000];
+
     Int_t TreemultTotalLambda;
+
     fTreeEvent = new TTree("fTreeEvent", "Event");
     fTreeEvent->Branch("TreemultLambda", &TreemultLambda, "TreemultLambda/I");
     fTreeEvent->Branch("TreemultAntiLambda", &TreemultAntiLambda, "TreemultAntiLambda/I");
     fTreeEvent->Branch("TreemultTotalLambda", &TreemultTotalLambda, "TreemultTotalLambda/I");
+    fTreeEvent->Branch("TreechargeLambda", &TreechargeLambda, "TreechargeLambda[TreemultLambda]/I");
+    fTreeEvent->Branch("TreePrimaryLambda", &TreePrimaryLambda, "TreePrimaryLambda[TreemultLambda]/O");
     fTreeEvent->Branch("TreeLambdaMother1", &TreeLambdaMother1, "TreeLambdaMother1[TreemultLambda]/I");
     fTreeEvent->Branch("TreeLambdaMother2", &TreeLambdaMother2, "TreeLambdaMother2[TreemultLambda]/I");
     fTreeEvent->Branch("TreeLambdaMother1ID", &TreeLambdaMother1ID, "TreeLambdaMother1ID[TreemultLambda]/I");
@@ -112,15 +127,19 @@ int DoubleLambda(int nEvents = 1000)
     fTreeEvent->Branch("TreeLambdaPy", &TreeLambdaPy, "TreeLambdaPy[TreemultLambda]/F");
     fTreeEvent->Branch("TreeLambdaPz", &TreeLambdaPz, "TreeLambdaPz[TreemultLambda]/F");
     fTreeEvent->Branch("TreeLambdaMass", &TreeLambdaMass, "TreeLambdaMass[TreemultLambda]/F");
-    fTreeEvent->Branch("TreechargeLambda", &TreechargeLambda, "TreechargeLambda[TreemultLambda]/I");
+    fTreeEvent->Branch("TreeLambdaEta", &TreeLambdaEta, "TreeLambdaEta[TreemultLambda]/F");
+    fTreeEvent->Branch("TreeLambdaPhi", &TreeLambdaPhi, "TreeLambdaPhi[TreemultLambda]/F");
     fTreeEvent->Branch("TreechargeAntiLambda", &TreechargeAntiLambda, "TreechargeAntiLambda[TreemultAntiLambda]/F");
-    fTreeEvent->Branch("TreeAntiLambdaPx", &TreeAntiLambdaPx, "TreeAntiLambdaPx[TreemultAntiLambda]/F");
-    fTreeEvent->Branch("TreeAntiLambdaPy", &TreeAntiLambdaPy, "TreeAntiLambdaPy[TreemultAntiLambda]/F");
-    fTreeEvent->Branch("TreeAntiLambdaPz", &TreeAntiLambdaPz, "TreeAntiLambdaPz[TreemultAntiLambda]/F");
+    fTreeEvent->Branch("TreePrimaryAntiLambda", &TreePrimaryAntiLambda, "TreePrimaryAntiLambda[TreemultAntiLambda]/O");
     fTreeEvent->Branch("TreeAntiLambdaMother1", &TreeAntiLambdaMother1, "TreeAntiLambdaMother1[TreemultAntiLambda]/I");
     fTreeEvent->Branch("TreeAntiLambdaMother2", &TreeAntiLambdaMother2, "TreeAntiLambdaMother2[TreemultAntiLambda]/I");
     fTreeEvent->Branch("TreeAntiLambdaMother1ID", &TreeAntiLambdaMother1ID, "TreeAntiLambdaMother1ID[TreemultAntiLambda]/I");
     fTreeEvent->Branch("TreeAntiLambdaMother2ID", &TreeAntiLambdaMother2ID, "TreeAntiLambdaMother2ID[TreemultAntiLambda]/I");
+    fTreeEvent->Branch("TreeAntiLambdaPx", &TreeAntiLambdaPx, "TreeAntiLambdaPx[TreemultAntiLambda]/F");
+    fTreeEvent->Branch("TreeAntiLambdaPy", &TreeAntiLambdaPy, "TreeAntiLambdaPy[TreemultAntiLambda]/F");
+    fTreeEvent->Branch("TreeAntiLambdaPz", &TreeAntiLambdaPz, "TreeAntiLambdaPz[TreemultAntiLambda]/F");
+    fTreeEvent->Branch("TreeAntiLambdaEta", &TreeAntiLambdaEta, "TreeAntiLambdaEta[TreemultAntiLambda]/F");
+    fTreeEvent->Branch("TreeAntiLambdaPhi", &TreeAntiLambdaPhi, "TreeAntiLambdaPhi[TreemultAntiLambda]/F");
 
     for (int iEvent = 0; iEvent < nEvents; ++iEvent)
     {
@@ -146,22 +165,200 @@ int DoubleLambda(int nEvents = 1000)
 
             int motherId1 = -999;
             int motherId2 = -999;
+            bool isPrimaryLambda = false;
+
             if (mother1 > 0)
             {
                 motherId1 = pythia.event[mother1].id();
+                // cout << "Particle " << i << " with PID " << pid << " has mother1 index " << mother1 << " with PID " << motherId1 << "\n";
             }
             if (mother2 >= 0)
             {
                 motherId2 = pythia.event[mother2].id();
+                // cout << "Particle " << i << " with PID " << pid << " has mother2 index " << mother2 << " with PID " << motherId2 << "\n";
+            }
+
+            if (std::abs(pid) != 3122)
+                continue; // only keep Lambdas and AntiLambdas
+            if (mother1 > 0 && mother2 == 0)
+            {
+                // cout << "Lambda from decay" << endl;
+                isPrimaryLambda = false;
+            }
+            else if (mother1 > 0 && mother2 > 0 && mother1 < mother2 && std::abs(ist) >= 81 && std::abs(ist) <= 89)
+            {
+                cout << "Lambda from hard process" << endl;
+                isPrimaryLambda = true;
+            }
+            else
+            {
+                // cout << "Lambda from other source" << endl;
+                isPrimaryLambda = false;
+            }
+
+            Particle &partmother1 = pythia.event[mother1];
+            Particle &partmother2 = pythia.event[mother2];
+            auto gmother1 = partmother1.mother1();
+            auto gmother2 = partmother1.mother2(); // these two look the same
+            auto gmother3 = partmother2.mother1();
+            auto gmother4 = partmother2.mother2(); // these two look the same
+            Particle &partgmother1 = pythia.event[gmother1];
+            Particle &partgmother2 = pythia.event[gmother3];
+
+            if (std::abs(motherId1) <= 8 || std::abs(motherId2) <= 8)
+            {
+                cout << "This Lambda is the daughter of light quarks.\n";
+                auto ggmother1 = partgmother1.mother1();
+                auto ggmother2 = partgmother2.mother1();
+                cout << "The two mothers are " << mother1 << " (PID = " << motherId1 << ") and " << mother2 << " (PID = " << motherId2 << "). " << endl;
+                cout << "The gmothers of mother 1 are: index " << gmother1 << " with PID " << pythia.event[gmother1].id() << " and " << gmother2 << " with PID " << pythia.event[gmother2].id() << "\n";
+                cout << "The gmothers of mother 2 are: index " << gmother3 << " with PID " << pythia.event[gmother3].id() << " and " << gmother4 << " with PID " << pythia.event[gmother4].id() << "\n";
+            }
+            else if (std::abs(motherId1) == 9 || std::abs(motherId2) == 9)
+            {
+                // cout << "This Lambda is the daughter of a gluon.\n";
+                // cout << "Particle " << i << " with PID " << pid << " has mother1 index " << mother1 << " with PID " << motherId1 << "\n";
+                // cout << "Particle " << i << " with PID " << pid << " has mother2 index " << mother2 << " with PID " << motherId2 << "\n";
+            }
+            else
+            {
+                // cout << "Particle " << i << " with PID " << pid << " has mother1 index " << mother1 << " with PID " << motherId1 << "\n";
+                // cout << "Particle " << i << " with PID " << pid << " has mother2 index " << mother2 << " with PID " << motherId2 << "\n";
+            }
+
+            // trace the s ancestors
+            int current = i;
+            int sindex = -1;
+            bool isFoundAncestorS = false; // false if Lambda is not primary
+            vector<int> motherList = part.motherList();
+
+            if (isPrimaryLambda)
+            {
+                cout << "a-PID " << pid << endl;
+                while (pythia.event[current].mother1() > 0)
+                {
+                    int m1 = pythia.event[current].mother1();
+                    int m2 = pythia.event[current].mother2();
+                    cout << "A Checking mother index " << m1 << " with PID " << pythia.event[m1].id() << "\n";
+                    cout << "A Checking mother index " << m2 << " with PID " << pythia.event[m2].id() << "\n";
+
+                    if (pid == 3122 && (pythia.event[m1].id() == 3 || pythia.event[m2].id() == 3))
+                    {
+                        cout << "Found a strange ancestor for particle " << i << " with PID " << pid << ": ancestor index " << m1 << " with PID " << pythia.event[m1].id() << "\n";
+                        cout << "Found a strange ancestor for particle " << i << " with PID " << pid << ": ancestor index " << m2 << " with PID " << pythia.event[m2].id() << "\n";
+                        if (pythia.event[m1].id() == 3)
+                            sindex = m1;
+                        else if (pythia.event[m2].id() == 3)
+                            sindex = m2;
+                        isFoundAncestorS = true;
+                        break;
+                    }
+                    if (pid == -3122 && (pythia.event[m1].id() == -3 || pythia.event[m2].id() == -3))
+                    {
+                        cout << "Found a strange ancestor for particle " << i << " with PID " << pid << ": ancestor index " << m1 << " with PID " << pythia.event[m1].id() << "\n";
+                        cout << "Found a strange ancestor for particle " << i << " with PID " << pid << ": ancestor index " << m2 << " with PID " << pythia.event[m2].id() << "\n";
+                        if (pythia.event[m1].id() == -3)
+                            sindex = m1;
+                        else if (pythia.event[m2].id() == -3)
+                            sindex = m2;
+                        isFoundAncestorS = true;
+                        break;
+                    }
+                    current = m1;
+                }
+                if (!isFoundAncestorS)
+                {
+                    int current = i;
+                    while (pythia.event[current].mother2() > 0)
+                    {
+                        int m1 = pythia.event[current].mother1();
+                        int m2 = pythia.event[current].mother2();
+                        cout << "B Checking mother index " << m1 << " with PID " << pythia.event[m1].id() << "\n";
+                        cout << "B Checking mother index " << m2 << " with PID " << pythia.event[m2].id() << "\n";
+
+                        if (pid == 3122 && (pythia.event[m1].id() == 3 || pythia.event[m2].id() == 3))
+                        {
+                            cout << "Found a strange ancestor for particle " << i << " with PID " << pid << ": ancestor index " << m1 << " with PID " << pythia.event[m1].id() << "\n";
+                            cout << "Found a strange ancestor for particle " << i << " with PID " << pid << ": ancestor index " << m2 << " with PID " << pythia.event[m2].id() << "\n";
+                            if (pythia.event[m1].id() == 3)
+                                sindex = m1;
+                            else if (pythia.event[m2].id() == 3)
+                                sindex = m2;
+                            isFoundAncestorS = true;
+                            break;
+                        }
+                        if (pid == -3122 && (pythia.event[m1].id() == -3 || pythia.event[m2].id() == -3))
+                        {
+                            cout << "Found a strange ancestor for particle " << i << " with PID " << pid << ": ancestor index " << m1 << " with PID " << pythia.event[m1].id() << "\n";
+                            cout << "Found a strange ancestor for particle " << i << " with PID " << pid << ": ancestor index " << m2 << " with PID " << pythia.event[m2].id() << "\n";
+                            if (pythia.event[m1].id() == -3)
+                                sindex = m1;
+                            else if (pythia.event[m2].id() == -3)
+                                sindex = m2;
+                            isFoundAncestorS = true;
+                            break;
+                        }
+                        current = m1;
+                    }
+                }
+                if (!isFoundAncestorS)
+                {
+                    cout << "No strange ancestor found for particle " << i << " with PID " << pid << "\n";
+                }
+            }
+
+            if (isPrimaryLambda)
+            {
+                cout << "PID " << pid << endl;
+                cout << "size of mother list " << motherList.size() << "\n";
+                for (int m = 0; m < motherList.size(); m++)
+                {
+                    cout << "Checking mother index " << motherList[m] << " with PID " << pythia.event[motherList[m]].id() << "\n";
+                    int motherIndex = motherList[m];
+                    if ((pid == 3122 && pythia.event[motherIndex].id() == 3) || (pid == -3122 && pythia.event[motherIndex].id() == -3))
+                    {
+                        cout << "Found a strange ancestor for particle " << i << " with PID " << pid << ": ancestor index " << motherIndex << " with PID " << pythia.event[motherIndex].id() << "\n";
+                        sindex = motherIndex;
+                        isFoundAncestorS = true;
+                        break;
+                    }
+                }
+                if (!isFoundAncestorS)
+                {
+                    for (int m = 0; m < motherList.size(); m++)
+                    {
+                        int motherIndex = motherList[m];
+                        Particle &partM = pythia.event[motherIndex];
+                        vector<int> motherListM = partM.motherList();
+                        cout <<"Looking at grandmothers of mother " << m << endl;
+                        for (int mm = 0; mm < motherListM.size(); mm++)
+                        {
+                            cout << "size " << motherListM.size() << "\n";
+                            int motherIndex2 = motherListM[mm];
+                            cout << "Checking grandmother index " << motherIndex2 << " with PID " << pythia.event[motherIndex2].id() << "\n";
+                            if ((pid == 3122 && pythia.event[motherIndex2].id() == 3) || (pid == -3122 && pythia.event[motherIndex2].id() == -3))
+                            {
+                                cout << "Found a strange ancestor for particle " << i << " with PID " << pid << ": ancestor index " << motherIndex2 << " with PID " << pythia.event[motherIndex2].id() << "\n";
+                                sindex = motherIndex2;
+                                isFoundAncestorS = true;
+                                break;
+                            }
+                        }
+                    }
+                }
             }
 
             if (pid == 3122) // Lambda
             {
+                TreeAncestorIndexLambda[lambdaNumber] = sindex;
+                TreePrimaryLambda[lambdaNumber] = isPrimaryLambda;
                 TreechargeLambda[lambdaNumber] = part.id();
                 TreeLambdaPx[lambdaNumber] = part.px();
                 TreeLambdaPy[lambdaNumber] = part.py();
                 TreeLambdaPz[lambdaNumber] = part.pz();
                 TreeLambdaMass[lambdaNumber] = part.m();
+                TreeLambdaEta[lambdaNumber] = part.eta();
+                TreeLambdaPhi[lambdaNumber] = part.phi();
                 TreeLambdaMother1[lambdaNumber] = part.mother1();
                 TreeLambdaMother2[lambdaNumber] = part.mother2();
                 TreeLambdaMother1ID[lambdaNumber] = motherId1;
@@ -171,11 +368,15 @@ int DoubleLambda(int nEvents = 1000)
             }
             else if (pid == -3122) // AntiLambda
             {
+                TreeAncestorIndexAntiLambda[antiLambdaNumber] = sindex;
+                TreePrimaryAntiLambda[antiLambdaNumber] = isPrimaryLambda;
                 TreechargeAntiLambda[antiLambdaNumber] = part.id();
                 TreeAntiLambdaPx[antiLambdaNumber] = part.px();
                 TreeAntiLambdaPy[antiLambdaNumber] = part.py();
                 TreeAntiLambdaPz[antiLambdaNumber] = part.pz();
                 TreeAntiLambdaMass[antiLambdaNumber] = part.m();
+                TreeAntiLambdaEta[antiLambdaNumber] = part.eta();
+                TreeAntiLambdaPhi[antiLambdaNumber] = part.phi();
                 TreeAntiLambdaMother1[antiLambdaNumber] = part.mother1();
                 TreeAntiLambdaMother2[antiLambdaNumber] = part.mother2();
                 TreeAntiLambdaMother1ID[antiLambdaNumber] = motherId1;
@@ -184,6 +385,24 @@ int DoubleLambda(int nEvents = 1000)
                 totalLambdaNumber++;
             }
         }
+        if (antiLambdaNumber == 1 && lambdaNumber == 1 && TreePrimaryAntiLambda[0] == 1 && TreePrimaryLambda[0] == 1)
+        {
+            cout << "\nEvent" << iEvent << endl;
+            cout << "Found an event with exactly one primary Lambda and one primary AntiLambda." << endl;
+            if (TreeAncestorIndexLambda[0] >= 0 && TreeAncestorIndexAntiLambda[0] >= 0)
+            {
+                cout << "s ancestor index for Lambda: " << TreeAncestorIndexLambda[0] << " with PID " << pythia.event[TreeAncestorIndexLambda[0]].id() << "\n";
+                cout << "s ancestor index for AntiLambda: " << TreeAncestorIndexAntiLambda[0] << " with PID " << pythia.event[TreeAncestorIndexAntiLambda[0]].id() << "\n";
+                cout << pythia.event[TreeAncestorIndexLambda[0]].mother1() << " " << pythia.event[TreeAncestorIndexAntiLambda[0]].mother1() << "\n";
+                cout << pythia.event[TreeAncestorIndexLambda[0]].mother2() << " " << pythia.event[TreeAncestorIndexAntiLambda[0]].mother2() << "\n";
+                if (pythia.event[TreeAncestorIndexLambda[0]].mother1() == pythia.event[TreeAncestorIndexAntiLambda[0]].mother1())
+                {
+                    cout << "Lambda and AntiLambda s quarks have the same mother." << endl;
+                }
+            }
+        }
+        cout << "\n"
+             << endl;
         if (totalLambdaNumber >= 2)
         {
             TreemultLambda = lambdaNumber;
@@ -193,10 +412,17 @@ int DoubleLambda(int nEvents = 1000)
         }
     }
 
-    TFile *fout = new TFile("DoubleLambdatree_test.root", "recreate");
+    TString Sfileout = Form("DoubleLambdatree_%d.root", nEvents);
+    TFile *fout = new TFile(Sfileout, "recreate");
     fout->cd();
     fTreeEvent->Write();
     fout->Close();
     pythia.stat();
+
+    auto end = std::chrono::high_resolution_clock::now();
+    // Compute the elapsed time
+    std::chrono::duration<double> elapsed = end - start;
+    std::cout << "Elapsed time: " << elapsed.count() << " seconds\n";
+
     return 0;
 }
