@@ -80,67 +80,50 @@ int DoubleLambda(int nEvents = 1000)
     evtgen = new EvtGenDecays(&pythia, "./DECAY_2010.DEC", "./evt.pdl");
     evtgen->readDecayFile("./DstarDecay.dec");*/
 
+    const int kMaxParticles = 20;
     TTree *fTreeEvent;
-    Int_t TreemultLambda;
-    Int_t TreechargeLambda[1000];
-    Int_t TreeAncestorIndexLambda[1000];
-    Float_t TreeLambdaPx[1000];
-    Float_t TreeLambdaPy[1000];
-    Float_t TreeLambdaPz[1000];
-    Float_t TreeLambdaMass[1000];
-    Float_t TreeLambdaEta[1000];
-    Float_t TreeLambdaPhi[1000];
-    Int_t TreeLambdaMother1[10000];
-    Int_t TreeLambdaMother2[10000];
-    Int_t TreeLambdaMother1ID[1000];
-    Int_t TreeLambdaMother2ID[1000];
-    Bool_t TreePrimaryLambda[1000];
-    Bool_t TreeIsLambdaFromPair[1000]{};
-    vector<int> motherListLambda[1000];
+    Int_t TreemultLambda{};
+    Float_t TreeLambdaPx[kMaxParticles]{};
+    Float_t TreeLambdaPy[kMaxParticles]{};
+    Float_t TreeLambdaPz[kMaxParticles]{};
+    Float_t TreeLambdaEta[kMaxParticles]{};
+    Float_t TreeLambdaPhi[kMaxParticles]{};
+    Bool_t TreePrimaryLambda[kMaxParticles]{};
+    Bool_t TreeIsLambdaFromPair[kMaxParticles]{};
+    vector<int> motherListLambda[kMaxParticles];
+    vector<int> TreeIndexPair[kMaxParticles]; // to store the index of the AntiLambda that forms a pair with each Lambda, initialized to -1
+    Int_t TreeNumberOfPairsLambda[kMaxParticles]{};
 
-    Int_t TreemultAntiLambda;
-    Float_t TreechargeAntiLambda[1000];
-    Int_t TreeAncestorIndexAntiLambda[1000];
-    Float_t TreeAntiLambdaPx[1000];
-    Float_t TreeAntiLambdaPy[1000];
-    Float_t TreeAntiLambdaPz[1000];
-    Float_t TreeAntiLambdaMass[1000];
-    Float_t TreeAntiLambdaEta[1000];
-    Float_t TreeAntiLambdaPhi[1000];
-    Int_t TreeAntiLambdaMother1[10000];
-    Int_t TreeAntiLambdaMother2[10000];
-    Int_t TreeAntiLambdaMother1ID[1000];
-    Int_t TreeAntiLambdaMother2ID[1000];
-    Bool_t TreePrimaryAntiLambda[1000];
-    Bool_t TreeIsAntiLambdaFromPair[1000]{};
-    vector<int> motherListAntiLambda[1000];
+    Int_t TreemultAntiLambda{};
+    Float_t TreeAntiLambdaPx[kMaxParticles]{};
+    Float_t TreeAntiLambdaPy[kMaxParticles]{};
+    Float_t TreeAntiLambdaPz[kMaxParticles]{};
+    Float_t TreeAntiLambdaEta[kMaxParticles]{};
+    Float_t TreeAntiLambdaPhi[kMaxParticles]{};
+    Bool_t TreePrimaryAntiLambda[kMaxParticles]{};
+    Bool_t TreeIsAntiLambdaFromPair[kMaxParticles]{};
+    vector<int> motherListAntiLambda[kMaxParticles];
+    vector<int> TreeIndexPairAnti[kMaxParticles]; // to store the index of the Lambda that forms a pair with each AntiLambda, initialized to -1
+    Int_t TreeNumberOfPairsAntiLambda[kMaxParticles]{};
 
-    Int_t TreemultTotalLambda;
+    Int_t TreemultTotalLambda{};
 
     fTreeEvent = new TTree("fTreeEvent", "Event");
     fTreeEvent->Branch("TreemultLambda", &TreemultLambda, "TreemultLambda/I");
     fTreeEvent->Branch("TreemultAntiLambda", &TreemultAntiLambda, "TreemultAntiLambda/I");
     fTreeEvent->Branch("TreemultTotalLambda", &TreemultTotalLambda, "TreemultTotalLambda/I");
-    fTreeEvent->Branch("TreechargeLambda", &TreechargeLambda, "TreechargeLambda[TreemultLambda]/I");
     fTreeEvent->Branch("TreePrimaryLambda", &TreePrimaryLambda, "TreePrimaryLambda[TreemultLambda]/O");
     fTreeEvent->Branch("TreeIsLambdaFromPair", &TreeIsLambdaFromPair, "TreeIsLambdaFromPair[TreemultLambda]/O");
-    fTreeEvent->Branch("TreeLambdaMother1", &TreeLambdaMother1, "TreeLambdaMother1[TreemultLambda]/I");
-    fTreeEvent->Branch("TreeLambdaMother2", &TreeLambdaMother2, "TreeLambdaMother2[TreemultLambda]/I");
-    fTreeEvent->Branch("TreeLambdaMother1ID", &TreeLambdaMother1ID, "TreeLambdaMother1ID[TreemultLambda]/I");
-    fTreeEvent->Branch("TreeLambdaMother2ID", &TreeLambdaMother2ID, "TreeLambdaMother2ID[TreemultLambda]/I");
+    fTreeEvent->Branch("TreeNumberOfPairsLambda", &TreeNumberOfPairsLambda, "TreeNumberOfPairsLambda[TreemultLambda]/I");
+    fTreeEvent->Branch("TreeIndexPair", &TreeIndexPair, "TreeIndexPair[TreemultLambda]/I");
     fTreeEvent->Branch("TreeLambdaPx", &TreeLambdaPx, "TreeLambdaPx[TreemultLambda]/F");
     fTreeEvent->Branch("TreeLambdaPy", &TreeLambdaPy, "TreeLambdaPy[TreemultLambda]/F");
     fTreeEvent->Branch("TreeLambdaPz", &TreeLambdaPz, "TreeLambdaPz[TreemultLambda]/F");
-    fTreeEvent->Branch("TreeLambdaMass", &TreeLambdaMass, "TreeLambdaMass[TreemultLambda]/F");
     fTreeEvent->Branch("TreeLambdaEta", &TreeLambdaEta, "TreeLambdaEta[TreemultLambda]/F");
     fTreeEvent->Branch("TreeLambdaPhi", &TreeLambdaPhi, "TreeLambdaPhi[TreemultLambda]/F");
-    fTreeEvent->Branch("TreechargeAntiLambda", &TreechargeAntiLambda, "TreechargeAntiLambda[TreemultAntiLambda]/F");
     fTreeEvent->Branch("TreePrimaryAntiLambda", &TreePrimaryAntiLambda, "TreePrimaryAntiLambda[TreemultAntiLambda]/O");
     fTreeEvent->Branch("TreeIsAntiLambdaFromPair", &TreeIsAntiLambdaFromPair, "TreeIsAntiLambdaFromPair[TreemultAntiLambda]/O");
-    fTreeEvent->Branch("TreeAntiLambdaMother1", &TreeAntiLambdaMother1, "TreeAntiLambdaMother1[TreemultAntiLambda]/I");
-    fTreeEvent->Branch("TreeAntiLambdaMother2", &TreeAntiLambdaMother2, "TreeAntiLambdaMother2[TreemultAntiLambda]/I");
-    fTreeEvent->Branch("TreeAntiLambdaMother1ID", &TreeAntiLambdaMother1ID, "TreeAntiLambdaMother1ID[TreemultAntiLambda]/I");
-    fTreeEvent->Branch("TreeAntiLambdaMother2ID", &TreeAntiLambdaMother2ID, "TreeAntiLambdaMother2ID[TreemultAntiLambda]/I");
+    fTreeEvent->Branch("TreeIndexPairAnti", &TreeIndexPairAnti, "TreeIndexPairAnti[TreemultAntiLambda]/I");
     fTreeEvent->Branch("TreeAntiLambdaPx", &TreeAntiLambdaPx, "TreeAntiLambdaPx[TreemultAntiLambda]/F");
     fTreeEvent->Branch("TreeAntiLambdaPy", &TreeAntiLambdaPy, "TreeAntiLambdaPy[TreemultAntiLambda]/F");
     fTreeEvent->Branch("TreeAntiLambdaPz", &TreeAntiLambdaPz, "TreeAntiLambdaPz[TreemultAntiLambda]/F");
@@ -232,17 +215,11 @@ int DoubleLambda(int nEvents = 1000)
             if (pid == 3122) // Lambda
             {
                 TreePrimaryLambda[lambdaNumber] = isPrimaryLambda;
-                TreechargeLambda[lambdaNumber] = part.id();
                 TreeLambdaPx[lambdaNumber] = part.px();
                 TreeLambdaPy[lambdaNumber] = part.py();
                 TreeLambdaPz[lambdaNumber] = part.pz();
-                TreeLambdaMass[lambdaNumber] = part.m();
                 TreeLambdaEta[lambdaNumber] = part.eta();
                 TreeLambdaPhi[lambdaNumber] = part.phi();
-                TreeLambdaMother1[lambdaNumber] = part.mother1();
-                TreeLambdaMother2[lambdaNumber] = part.mother2();
-                TreeLambdaMother1ID[lambdaNumber] = motherId1;
-                TreeLambdaMother2ID[lambdaNumber] = motherId2;
                 motherListLambda[lambdaNumber] = part.motherList();
                 lambdaNumber++;
                 totalLambdaNumber++;
@@ -250,17 +227,11 @@ int DoubleLambda(int nEvents = 1000)
             else if (pid == -3122) // AntiLambda
             {
                 TreePrimaryAntiLambda[antiLambdaNumber] = isPrimaryLambda;
-                TreechargeAntiLambda[antiLambdaNumber] = part.id();
                 TreeAntiLambdaPx[antiLambdaNumber] = part.px();
                 TreeAntiLambdaPy[antiLambdaNumber] = part.py();
                 TreeAntiLambdaPz[antiLambdaNumber] = part.pz();
-                TreeAntiLambdaMass[antiLambdaNumber] = part.m();
                 TreeAntiLambdaEta[antiLambdaNumber] = part.eta();
                 TreeAntiLambdaPhi[antiLambdaNumber] = part.phi();
-                TreeAntiLambdaMother1[antiLambdaNumber] = part.mother1();
-                TreeAntiLambdaMother2[antiLambdaNumber] = part.mother2();
-                TreeAntiLambdaMother1ID[antiLambdaNumber] = motherId1;
-                TreeAntiLambdaMother2ID[antiLambdaNumber] = motherId2;
                 motherListAntiLambda[antiLambdaNumber] = part.motherList();
                 antiLambdaNumber++;
                 totalLambdaNumber++;
@@ -268,13 +239,26 @@ int DoubleLambda(int nEvents = 1000)
         }
         // check which Lambda - AntiLambda pairs have common mothers
 
-        if (antiLambdaNumber >= 1 && lambdaNumber >= 1 && TreePrimaryAntiLambda[0] == 1 && TreePrimaryLambda[0] == 1)
+        if (antiLambdaNumber >= 1 && lambdaNumber >= 1)
         {
+            cout << "\nIn this event, there are " << lambdaNumber << " Lambdas and " << antiLambdaNumber << " AntiLambdas. " << endl;
             for (int i = 0; i < lambdaNumber; ++i)
             {
+                int numberofPairs = 0;
+                cout << "The Lambda n. " << i << endl;
+                TreeIsLambdaFromPair[i] = false;
+                cout << "AAA number of pairs " << numberofPairs << endl;
+                if (TreePrimaryAntiLambda[i] != 1)
+                {
+                    TreeNumberOfPairsLambda[i] = numberofPairs;
+                    continue; // only consider primary Lambdas for pairing
+                }
                 for (int j = 0; j < antiLambdaNumber; ++j)
                 {
+                    cout << "AA number of pairs " << numberofPairs << endl;
                     bool isPair = false;
+                    if (TreePrimaryAntiLambda[j] != 1)
+                        continue; // only consider primary AntiLambdas for pairing
                     for (const auto &a : motherListLambda[i])
                     {
                         for (const auto &b : motherListAntiLambda[j])
@@ -288,11 +272,46 @@ int DoubleLambda(int nEvents = 1000)
                         if (isPair)
                             break;
                     }
+                    cout << "A number of pairs " << numberofPairs << endl;
                     if (isPair)
                     {
+                        cout << "isPair " << isPair << endl;
+                        numberofPairs++;
+                        cout << "number of pairs " << numberofPairs << endl;
                         TreeIsLambdaFromPair[i] = isPair;
                         TreeIsAntiLambdaFromPair[j] = isPair;
+                        TreeIndexPair[i].push_back(j);     // store the index of the AntiLambda that forms a pair with this Lambda
+                        TreeIndexPairAnti[j].push_back(i); // store the index of the Lambda that forms a pair with this AntiLambda
                     }
+                }
+                TreeNumberOfPairsLambda[i] = numberofPairs; // store the number of pairs that this Lambda forms with AntiLambdas in the event
+            }
+            for (int i = 0; i < lambdaNumber; ++i)
+            {
+                cout << "The Lambda n. " << i << " forms " << TreeIndexPair[i].size() << " pairs." << endl;
+                cout << "isPair : " << TreeIsLambdaFromPair[i] << endl;
+                cout << TreeNumberOfPairsLambda[i] << " pairs." << endl;
+                if (TreeIsLambdaFromPair[i] && TreeNumberOfPairsLambda[i] == 0)
+                { // non succede
+                    cout << "Error: Lambda n. " << i << " is marked as from pair but has no pairs in TreeIndexPair." << endl;
+                }
+                if (!TreeIsLambdaFromPair[i] && TreeNumberOfPairsLambda[i] > 0)
+                {
+                    cout << "Error: Lambda n. " << i << " is marked as not from pair but has " << TreeNumberOfPairsLambda[i] << " pairs in TreeIndexPair." << endl;
+                }
+                cout << "with the antilambdas: " << endl;
+                for (const auto &indexAnti : TreeIndexPair[i])
+                {
+                    cout << "AntiLambda n. " << indexAnti << endl;
+                }
+            }
+            for (int j = 0; j < antiLambdaNumber; ++j)
+            {
+                cout << "The AntiLambda n. " << j << " forms " << TreeIndexPairAnti[j].size() << " pairs." << endl;
+                cout << "with the lambdas: " << endl;
+                for (const auto &indexLambda : TreeIndexPairAnti[j])
+                {
+                    cout << "Lambda n. " << indexLambda << endl;
                 }
             }
         }
@@ -302,6 +321,15 @@ int DoubleLambda(int nEvents = 1000)
             TreemultAntiLambda = antiLambdaNumber;
             TreemultTotalLambda = totalLambdaNumber;
             fTreeEvent->Fill();
+        }
+        for (int i = 0; i < lambdaNumber; ++i)
+            TreeIndexPair[i].clear();
+        for (int j = 0; j < antiLambdaNumber; ++j)
+            TreeIndexPairAnti[j].clear();
+        for (int i = 0; i < kMaxParticles; i++)
+        {
+            TreeIsLambdaFromPair[i] = false;
+            TreeIsAntiLambdaFromPair[i] = false;
         }
     }
 
@@ -316,6 +344,8 @@ int DoubleLambda(int nEvents = 1000)
     // Compute the elapsed time
     std::chrono::duration<double> elapsed = end - start;
     std::cout << "Elapsed time: " << elapsed.count() << " seconds\n";
+
+    cout << "I produced the file " << Sfileout << " with " << nEvents << " events." << endl;
 
     return 0;
 }
