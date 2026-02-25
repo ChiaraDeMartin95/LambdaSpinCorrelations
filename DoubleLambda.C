@@ -95,6 +95,7 @@ int DoubleLambda(int nEvents = 1000)
     Int_t TreeLambdaMother1ID[1000];
     Int_t TreeLambdaMother2ID[1000];
     Bool_t TreePrimaryLambda[1000];
+    Bool_t TreeIsLambdaFromPair[1000]{};
     vector<int> motherListLambda[1000];
 
     Int_t TreemultAntiLambda;
@@ -111,6 +112,7 @@ int DoubleLambda(int nEvents = 1000)
     Int_t TreeAntiLambdaMother1ID[1000];
     Int_t TreeAntiLambdaMother2ID[1000];
     Bool_t TreePrimaryAntiLambda[1000];
+    Bool_t TreeIsAntiLambdaFromPair[1000]{};
     vector<int> motherListAntiLambda[1000];
 
     Int_t TreemultTotalLambda;
@@ -121,6 +123,7 @@ int DoubleLambda(int nEvents = 1000)
     fTreeEvent->Branch("TreemultTotalLambda", &TreemultTotalLambda, "TreemultTotalLambda/I");
     fTreeEvent->Branch("TreechargeLambda", &TreechargeLambda, "TreechargeLambda[TreemultLambda]/I");
     fTreeEvent->Branch("TreePrimaryLambda", &TreePrimaryLambda, "TreePrimaryLambda[TreemultLambda]/O");
+    fTreeEvent->Branch("TreeIsLambdaFromPair", &TreeIsLambdaFromPair, "TreeIsLambdaFromPair[TreemultLambda]/O");
     fTreeEvent->Branch("TreeLambdaMother1", &TreeLambdaMother1, "TreeLambdaMother1[TreemultLambda]/I");
     fTreeEvent->Branch("TreeLambdaMother2", &TreeLambdaMother2, "TreeLambdaMother2[TreemultLambda]/I");
     fTreeEvent->Branch("TreeLambdaMother1ID", &TreeLambdaMother1ID, "TreeLambdaMother1ID[TreemultLambda]/I");
@@ -133,6 +136,7 @@ int DoubleLambda(int nEvents = 1000)
     fTreeEvent->Branch("TreeLambdaPhi", &TreeLambdaPhi, "TreeLambdaPhi[TreemultLambda]/F");
     fTreeEvent->Branch("TreechargeAntiLambda", &TreechargeAntiLambda, "TreechargeAntiLambda[TreemultAntiLambda]/F");
     fTreeEvent->Branch("TreePrimaryAntiLambda", &TreePrimaryAntiLambda, "TreePrimaryAntiLambda[TreemultAntiLambda]/O");
+    fTreeEvent->Branch("TreeIsAntiLambdaFromPair", &TreeIsAntiLambdaFromPair, "TreeIsAntiLambdaFromPair[TreemultAntiLambda]/O");
     fTreeEvent->Branch("TreeAntiLambdaMother1", &TreeAntiLambdaMother1, "TreeAntiLambdaMother1[TreemultAntiLambda]/I");
     fTreeEvent->Branch("TreeAntiLambdaMother2", &TreeAntiLambdaMother2, "TreeAntiLambdaMother2[TreemultAntiLambda]/I");
     fTreeEvent->Branch("TreeAntiLambdaMother1ID", &TreeAntiLambdaMother1ID, "TreeAntiLambdaMother1ID[TreemultAntiLambda]/I");
@@ -193,6 +197,7 @@ int DoubleLambda(int nEvents = 1000)
                 isPrimaryLambda = false;
             }
 
+            /*
             Particle &partmother1 = pythia.event[mother1];
             Particle &partmother2 = pythia.event[mother2];
             auto gmother1 = partmother1.mother1();
@@ -222,6 +227,7 @@ int DoubleLambda(int nEvents = 1000)
                 // cout << "Particle " << i << " with PID " << pid << " has mother1 index " << mother1 << " with PID " << motherId1 << "\n";
                 // cout << "Particle " << i << " with PID " << pid << " has mother2 index " << mother2 << " with PID " << motherId2 << "\n";
             }
+                */
 
             if (pid == 3122) // Lambda
             {
@@ -260,29 +266,20 @@ int DoubleLambda(int nEvents = 1000)
                 totalLambdaNumber++;
             }
         }
+        // check which Lambda - AntiLambda pairs have common mothers
+
         if (antiLambdaNumber >= 1 && lambdaNumber >= 1 && TreePrimaryAntiLambda[0] == 1 && TreePrimaryLambda[0] == 1)
         {
-            cout << "Found an event with " << lambdaNumber << " primary Lambda and " << antiLambdaNumber << " primary AntiLambda." << endl;
             for (int i = 0; i < lambdaNumber; ++i)
             {
-                cout << "Lambda " << i << ": PID " << TreechargeLambda[i] << ", mother1 index " << TreeLambdaMother1[i] << " with PID " << TreeLambdaMother1ID[i] << ", mother2 index " << TreeLambdaMother2[i] << " with PID " << TreeLambdaMother2ID[i] << "\n";
-                for (Int_t m : motherListLambda[i])
-                {
-                    cout << "  Mother index " << m << " with PID " << pythia.event[m].id() << " and status " << pythia.event[m].status() << "\n";
-                }
                 for (int j = 0; j < antiLambdaNumber; ++j)
                 {
                     bool isPair = false;
-                    cout << "AntiLambda " << j << ": PID " << TreechargeAntiLambda[j] << ", mother1 index " << TreeAntiLambdaMother1[j] << " with PID " << TreeAntiLambdaMother1ID[j] << ", mother2 index " << TreeAntiLambdaMother2[j] << " with PID " << TreeAntiLambdaMother2ID[j] << "\n";
-                    for (Int_t m : motherListAntiLambda[j])
-                    {
-                        cout << "  Mother index " << m << " with PID " << pythia.event[m].id() << " and status " << pythia.event[m].status() << "\n";
-                    }
                     for (const auto &a : motherListLambda[i])
                     {
                         for (const auto &b : motherListAntiLambda[j])
                         {
-                            if (a == b)
+                            if (a == b && std::abs(pythia.event[a].status()) > 19) // check they have a common mother with status code indicating it's not a beam particle
                             {
                                 isPair = true;
                                 break;
@@ -291,7 +288,11 @@ int DoubleLambda(int nEvents = 1000)
                         if (isPair)
                             break;
                     }
-                    cout << "isPair " << isPair << endl;
+                    if (isPair)
+                    {
+                        TreeIsLambdaFromPair[i] = isPair;
+                        TreeIsAntiLambdaFromPair[j] = isPair;
+                    }
                 }
             }
         }
