@@ -73,7 +73,7 @@ void buildHistos(int nEvents = 1000, float ptmin = 0.6, float ptmax = 4.0, float
   THnSparseD hsparse_same("hsparse_same", "hsparse_same", 4, bins, xmin, xmax);
 
   // --- open tree file ---
-  TString Sinputfile = Form("../DoubleLambdatree_%dF.root", nEvents);
+  TString Sinputfile = Form("../DoubleLambdatree_%d.root", nEvents);
   TFile *f = new TFile(Sinputfile, "");
   if (!f || f->IsZombie())
   {
