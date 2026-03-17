@@ -119,11 +119,11 @@ Float_t yLabelOffset = 0.01;
 Float_t tickX = 0.03;
 Float_t tickY = 0.025;
 
-void plotHistos(int nEvents = 1000)
+void plotHistos(int cmEnergyGeV = 13600, int nEvents = 1000, float ymax = 0.5)
 {
 
   // --- open histo file ---
-  TString Sinputfile = Form("../DoubleLambdaHistos_%d.root", nEvents);
+  TString Sinputfile = Form("../DoubleLambdaHistos_%d_cmEnergy%d_ymax%.2f.root", nEvents, cmEnergyGeV, ymax);
   TFile *f = new TFile(Sinputfile, "");
   if (!f || f->IsZombie())
   {
@@ -167,7 +167,7 @@ void plotHistos(int nEvents = 1000)
   hsparse_same->GetAxis(2)->SetRange(2, 2); // primary pairs
   TH1F *hRelDistancePrimary = (TH1F *)hsparse_same->Projection(0);
   hRelDistancePrimary->SetName("hRelDistancePrimary");
-  int Nprim =  hRelDistancePrimary->GetEntries();
+  int Nprim = hRelDistancePrimary->GetEntries();
   cout << Nprim << " primary pairs in total" << endl;
   TH1F *hRelDistancePrimaryNorm = (TH1F *)hRelDistancePrimary->Clone("hRelDistancePrimaryNorm");
   hRelDistancePrimaryNorm->Rebin(2);

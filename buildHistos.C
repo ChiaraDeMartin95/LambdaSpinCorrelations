@@ -31,13 +31,13 @@
 #include <valarray>
 #include <chrono>
 
-float getradialdistance(float phi1, float eta1, float phi2, float eta2)
+float getradialdistance(float phi1, float y1, float phi2, float y2)
 {
   float dphi = std::abs(phi1 - phi2);
   if (dphi > M_PI)
     dphi = 2 * M_PI - dphi;
-  float deta = eta1 - eta2;
-  return std::sqrt(dphi * dphi + deta * deta);
+  float dy = y1 - y2;
+  return std::sqrt(dphi * dphi + dy * dy);
 }
 float getpairmass(TLorentzVector part1,
                   TLorentzVector part2)
@@ -59,9 +59,14 @@ struct Candidate
   vector<int> indexpair;
 };
 
-void buildHistos(int nEvents = 1000, float ptmin = 0.6, float ptmax = 4.0, float ymax = 0.5)
+float maxY = 0.5;
+void buildHistos(int cmEnergyGeV = 13600, int nEvents = 1000, float ptmin = 0.6, float ptmax = 4.0, float ymax = 0.5)
 {
 
+  if (ymax > maxY){
+    cout <<"You set a looser y cut then what was set to produce the input file" << endl;
+    return;
+  }
   std::vector<std::vector<Candidate>> lambdas;
   std::vector<std::vector<Candidate>> antiLambdas;
 
@@ -73,7 +78,7 @@ void buildHistos(int nEvents = 1000, float ptmin = 0.6, float ptmax = 4.0, float
   THnSparseD hsparse_same("hsparse_same", "hsparse_same", 4, bins, xmin, xmax);
 
   // --- open tree file ---
-  TString Sinputfile = Form("../DoubleLambdatree_%d.root", nEvents);
+  TString Sinputfile = Form("../DoubleLambdatree_%d_cmEnergy%d_maxY%.2f.root", nEvents, cmEnergyGeV, maxY);
   TFile *f = new TFile(Sinputfile, "");
   if (!f || f->IsZombie())
   {
@@ -228,7 +233,7 @@ void buildHistos(int nEvents = 1000, float ptmin = 0.6, float ptmax = 4.0, float
     {
       for (auto &antiLambda : antiLambdaVec)
       {
-        float relative_distance = getradialdistance(lambda.phi, lambda.eta, antiLambda.phi, antiLambda.eta);
+        float relative_distance = getradialdistance(lambda.phi, lambda.y, antiLambda.phi, antiLambda.y);
         float pair_invmass = getpairmass(lambda.tvec, antiLambda.tvec);
         bool pair_isprimary = lambda.isprimary && antiLambda.isprimary;
         bool pair_ispair = 0;
@@ -248,7 +253,7 @@ void buildHistos(int nEvents = 1000, float ptmin = 0.6, float ptmax = 4.0, float
     }
   }
   // dump to output file
-  TString Sfileout = Form("../DoubleLambdaHistos_%d.root", nEvents);
+  TString Sfileout = Form("../DoubleLambdaHistos_%d_cmEnergy%d_ymax%.2f.root", nEvents, cmEnergyGeV, ymax);
   TFile *fout = new TFile(Sfileout, "recreate");
   fout->cd();
   hsparse_same.Write();
