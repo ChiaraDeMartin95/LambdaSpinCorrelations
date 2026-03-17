@@ -161,9 +161,14 @@ void plotHistos(int nEvents = 1000)
   TH1F *hInvMassAll = (TH1F *)hPairInvMass->Clone("hInvMassAll");
   TH1F *hInvMassAllNorm = (TH1F *)hPairInvMass->Clone("hInvMassAllNorm");
   hInvMassAllNorm->Scale(1. / hInvMassAll->Integral());
+  int Npairs = hRelativeDistance->GetEntries();
+  cout << Npairs << " pairs in total" << endl;
 
   hsparse_same->GetAxis(2)->SetRange(2, 2); // primary pairs
   TH1F *hRelDistancePrimary = (TH1F *)hsparse_same->Projection(0);
+  hRelDistancePrimary->SetName("hRelDistancePrimary");
+  int Nprim =  hRelDistancePrimary->GetEntries();
+  cout << Nprim << " primary pairs in total" << endl;
   TH1F *hRelDistancePrimaryNorm = (TH1F *)hRelDistancePrimary->Clone("hRelDistancePrimaryNorm");
   hRelDistancePrimaryNorm->Rebin(2);
   hRelDistancePrimaryNorm->Scale(1. / 2 / hRelDistancePrimaryNorm->Integral());
@@ -178,6 +183,8 @@ void plotHistos(int nEvents = 1000)
   hsparse_same->GetAxis(3)->SetRange(2, 2); // primary pairs from same mother
   TH1F *hRelDistanceSameMother = (TH1F *)hsparse_same->Projection(0);
   hRelDistanceSameMother->SetName("hRelDistanceSameMother");
+  int NprimSM = hRelDistanceSameMother->GetEntries();
+  cout << NprimSM << " primary pairs from same mother" << endl;
   TH1F *hRelDistanceSameMotherNorm = (TH1F *)hRelDistanceSameMother->Clone("hRelDistanceSameMotherNorm");
   hRelDistanceSameMotherNorm->Rebin(2);
   hRelDistanceSameMotherNorm->Scale(1. / 2 / hRelDistanceSameMotherNorm->Integral());
@@ -193,6 +200,8 @@ void plotHistos(int nEvents = 1000)
   hsparse_same->GetAxis(3)->SetRange(1, 1); // primary pairs from different mothers
   TH1F *hRelDistanceDiffMother = (TH1F *)hsparse_same->Projection(0);
   hRelDistanceDiffMother->SetName("hRelDistanceDiffMother");
+  int NprimDM = hRelDistanceDiffMother->GetEntries();
+  cout << NprimDM << " primary pairs from different mothers" << endl;
   TH1F *hRelDistanceDiffMotherNorm = (TH1F *)hRelDistanceDiffMother->Clone("hRelDistanceDiffMotherNorm");
   hRelDistanceDiffMotherNorm->Rebin(2);
   hRelDistanceDiffMotherNorm->Scale(1. / 2 / hRelDistanceDiffMotherNorm->Integral());
@@ -211,6 +220,21 @@ void plotHistos(int nEvents = 1000)
   hInvMassSecondary->SetName("hInvMassSecondary");
   TH1F *hInvMassSecondaryNorm = (TH1F *)hInvMassSecondary->Clone("hInvMassSecondaryNorm");
   hInvMassSecondaryNorm->Scale(1. / hInvMassSecondary->Integral());
+
+  TCanvas *fractionCanvas = new TCanvas("fractionCanvas", "Fraction Canvas", 1200, 800);
+  StyleCanvas(fractionCanvas, 0.03, 0.15, 0.18, 0.03);
+  TH1F *hDummyFraction = new TH1F("hDummyFraction", "Fraction of pairs", 3, -0.5, 2.5);
+  StyleHisto(hDummyFraction, 0, 0.15, 1, 1, "Category", "Fraction", "", 1.15, 1.3, 1.7);
+  hDummyFraction->SetBinContent(1, (float)Nprim / Npairs);
+  hDummyFraction->SetBinContent(2, (float)NprimSM / Npairs);
+  hDummyFraction->SetBinContent(3, (float)NprimDM / Npairs);
+  hDummyFraction->GetXaxis()->SetBinLabel(1, "Primary/Total");
+  hDummyFraction->GetXaxis()->SetBinLabel(2, "Primary Same Mother/Total");
+  hDummyFraction->GetXaxis()->SetBinLabel(3, "Primary Diff Mother/Total");
+  hDummyFraction->Draw("HIST");
+  fractionCanvas->SaveAs("../FractionPairs.pdf");
+  fractionCanvas->SaveAs("../FractionPairs.png");
+  fractionCanvas->SaveAs("../FractionPairs.eps");
 
   TCanvas *relDistanceCanvas = new TCanvas("relDistanceCanvas", "Relative Distance", 800, 600);
   StyleCanvas(relDistanceCanvas, 0.03, 0.15, 0.18, 0.03);
