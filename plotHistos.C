@@ -101,6 +101,10 @@ void StylePad(TPad *pad, Float_t LMargin, Float_t RMargin, Float_t TMargin, Floa
   pad->SetTopMargin(TMargin);
   pad->SetBottomMargin(BMargin);
 }
+Double_t SetEfficiencyError(Int_t k, Int_t n)
+{
+  return sqrt(((Double_t)k + 1) * ((Double_t)k + 2) / (n + 2) / (n + 3) - pow((Double_t)(k + 1), 2) / pow(n + 2, 2));
+}
 
 TString TitleRelDistance = "#sqrt{#Delta#phi^{2} + #Delta y^{2}}";
 TString TitlePairs = "#it{N}_{#Lambda#bar{#Lambda} pairs}";
@@ -119,7 +123,17 @@ Float_t yLabelOffset = 0.01;
 Float_t tickX = 0.03;
 Float_t tickY = 0.025;
 
-void plotHistos(int cmEnergyGeV = 13600, int nEvents = 1000, float ymax = 0.5)
+const float Ps = 1.;
+const float PSigma0 = 1. / 9;
+const float PXi0 = 0.6;
+const float PXiMinus = 0.6;
+const float PSigmaStar = 5. / 9;
+const float PBJs = 0.63;
+const float PBJSigma0 = 0.15;
+const float PBJXi0 = -0.37;
+const float PBJXiMinus = -0.37;
+
+void plotHistos(int cmEnergyGeV = 13600, int nEvents = 1000, float ymax = 0.5, int rebin = 2)
 {
 
   // --- open histo file ---
@@ -170,15 +184,13 @@ void plotHistos(int cmEnergyGeV = 13600, int nEvents = 1000, float ymax = 0.5)
   int Nprim = hRelDistancePrimary->GetEntries();
   cout << Nprim << " primary pairs in total" << endl;
   TH1F *hRelDistancePrimaryNorm = (TH1F *)hRelDistancePrimary->Clone("hRelDistancePrimaryNorm");
-  hRelDistancePrimaryNorm->Rebin(2);
-  hRelDistancePrimaryNorm->Scale(1. / 2 / hRelDistancePrimaryNorm->Integral());
+  // hRelDistancePrimaryNorm->Rebin(2);
+  // hRelDistancePrimaryNorm->Scale(1. / 2 / hRelDistancePrimaryNorm->Integral());
+  hRelDistancePrimaryNorm->Scale(1. / hRelDistanceAll->Integral());
   TH1F *hInvMassPrimary = (TH1F *)hsparse_same->Projection(1);
   TH1F *hInvMassPrimaryNorm = (TH1F *)hInvMassPrimary->Clone("hInvMassPrimaryNorm");
-  hInvMassPrimaryNorm->Scale(1. / hInvMassPrimary->Integral());
-  TH1F *hRatioPrimaryAll = (TH1F *)hRelDistancePrimary->Clone("hRatioPrimaryAll");
-  hRatioPrimaryAll->Divide(hRelDistanceAll);
-  TH1F *hRatioMassPrimaryAll = (TH1F *)hInvMassPrimary->Clone("hRatioMassPrimaryAll");
-  hRatioMassPrimaryAll->Divide(hInvMassAll);
+  // hInvMassPrimaryNorm->Scale(1. / hInvMassPrimary->Integral());
+  hInvMassPrimaryNorm->Scale(1. / hInvMassAll->Integral());
 
   hsparse_same->GetAxis(3)->SetRange(2, 2); // primary pairs from same mother
   TH1F *hRelDistanceSameMother = (TH1F *)hsparse_same->Projection(0);
@@ -186,16 +198,14 @@ void plotHistos(int cmEnergyGeV = 13600, int nEvents = 1000, float ymax = 0.5)
   int NprimSM = hRelDistanceSameMother->GetEntries();
   cout << NprimSM << " primary pairs from same mother" << endl;
   TH1F *hRelDistanceSameMotherNorm = (TH1F *)hRelDistanceSameMother->Clone("hRelDistanceSameMotherNorm");
-  hRelDistanceSameMotherNorm->Rebin(2);
-  hRelDistanceSameMotherNorm->Scale(1. / 2 / hRelDistanceSameMotherNorm->Integral());
+  // hRelDistanceSameMotherNorm->Rebin(2);
+  // hRelDistanceSameMotherNorm->Scale(1. / 2 / hRelDistanceSameMotherNorm->Integral());
+  hRelDistanceSameMotherNorm->Scale(1. / hRelDistanceAll->Integral());
   TH1F *hInvMassSameMother = (TH1F *)hsparse_same->Projection(1);
   hInvMassSameMother->SetName("hInvMassSameMother");
   TH1F *hInvMassSameMotherNorm = (TH1F *)hInvMassSameMother->Clone("hInvMassSameMotherNorm");
-  hInvMassSameMotherNorm->Scale(1. / hInvMassSameMother->Integral());
-  TH1F *hRatioSameMotherPrimary = (TH1F *)hRelDistanceSameMother->Clone("hRatioSameMotherPrimary");
-  hRatioSameMotherPrimary->Divide(hRelDistanceAll);
-  TH1F *hRatioMassSameMotherPrimary = (TH1F *)hInvMassSameMother->Clone("hRatioMassSameMotherPrimary");
-  hRatioMassSameMotherPrimary->Divide(hInvMassAll);
+  // hInvMassSameMotherNorm->Scale(1. / hInvMassSameMother->Integral());
+  hInvMassSameMotherNorm->Scale(1. / hInvMassAll->Integral());
 
   hsparse_same->GetAxis(3)->SetRange(1, 1); // primary pairs from different mothers
   TH1F *hRelDistanceDiffMother = (TH1F *)hsparse_same->Projection(0);
@@ -203,24 +213,82 @@ void plotHistos(int cmEnergyGeV = 13600, int nEvents = 1000, float ymax = 0.5)
   int NprimDM = hRelDistanceDiffMother->GetEntries();
   cout << NprimDM << " primary pairs from different mothers" << endl;
   TH1F *hRelDistanceDiffMotherNorm = (TH1F *)hRelDistanceDiffMother->Clone("hRelDistanceDiffMotherNorm");
-  hRelDistanceDiffMotherNorm->Rebin(2);
-  hRelDistanceDiffMotherNorm->Scale(1. / 2 / hRelDistanceDiffMotherNorm->Integral());
+  // hRelDistanceDiffMotherNorm->Rebin(2);
+  // hRelDistanceDiffMotherNorm->Scale(1. / 2 / hRelDistanceDiffMotherNorm->Integral());
+  hRelDistanceDiffMotherNorm->Scale(1. / hRelDistanceAll->Integral());
   TH1F *hInvMassDiffMother = (TH1F *)hsparse_same->Projection(1);
   hInvMassDiffMother->SetName("hInvMassDiffMother");
   TH1F *hInvMassDiffMotherNorm = (TH1F *)hInvMassDiffMother->Clone("hInvMassDiffMotherNorm");
-  hInvMassDiffMotherNorm->Scale(1. / hInvMassDiffMother->Integral());
+  // hInvMassDiffMotherNorm->Scale(1. / hInvMassDiffMother->Integral());
+  hInvMassDiffMotherNorm->Scale(1. / hInvMassAll->Integral());
 
   hsparse_same->GetAxis(3)->SetRange(0, -1);
   hsparse_same->GetAxis(2)->SetRange(1, 1); // secondary pairs
   TH1F *hRelDistanceSecondary = (TH1F *)hsparse_same->Projection(0);
   hRelDistanceSecondary->SetName("hRelDistanceSecondary");
   TH1F *hRelDistanceSecondaryNorm = (TH1F *)hRelDistanceSecondary->Clone("hRelDistanceSecondaryNorm");
-  hRelDistanceSecondaryNorm->Scale(1. / hRelDistanceSecondary->Integral());
+  // hRelDistanceSecondaryNorm->Scale(1. / hRelDistanceSecondary->Integral());
+  hRelDistanceSecondaryNorm->Scale(1. / hRelDistanceAll->Integral());
   TH1F *hInvMassSecondary = (TH1F *)hsparse_same->Projection(1);
   hInvMassSecondary->SetName("hInvMassSecondary");
   TH1F *hInvMassSecondaryNorm = (TH1F *)hInvMassSecondary->Clone("hInvMassSecondaryNorm");
-  hInvMassSecondaryNorm->Scale(1. / hInvMassSecondary->Integral());
+  // hInvMassSecondaryNorm->Scale(1. / hInvMassSecondary->Integral());
+  hInvMassSecondaryNorm->Scale(1. / hInvMassAll->Integral());
 
+  // Ratios
+  hRelDistanceSameMother->Rebin(rebin);
+  hRelDistancePrimary->Rebin(rebin);
+  hRelDistanceAll->Rebin(rebin);
+  hRelDistanceSecondary->Rebin(rebin);
+  hInvMassSameMother->Rebin(rebin);
+  hInvMassPrimary->Rebin(rebin);
+  hInvMassAll->Rebin(rebin);
+  hInvMassSecondary->Rebin(rebin);
+  // vs R
+  TH1F *hRatioPrimaryAll = (TH1F *)hRelDistancePrimary->Clone("hRatioPrimaryAll");
+  hRatioPrimaryAll->Divide(hRelDistanceAll);
+  TH1F *hRatioSameMotherPrimary = (TH1F *)hRelDistanceSameMother->Clone("hRatioSameMotherPrimary");
+  hRatioSameMotherPrimary->Divide(hRelDistanceAll);
+  TH1F *hRatioSameMotherToPrimary = (TH1F *)hRelDistanceSameMother->Clone("hRatioSameMotherToPrimary");
+  hRatioSameMotherToPrimary->Divide(hRelDistancePrimary);
+  // vs mass
+  TH1F *hRatioMassPrimaryAll = (TH1F *)hInvMassPrimary->Clone("hRatioMassPrimaryAll");
+  hRatioMassPrimaryAll->Divide(hInvMassAll);
+  TH1F *hRatioMassSameMotherPrimary = (TH1F *)hInvMassSameMother->Clone("hRatioMassSameMotherPrimary");
+  hRatioMassSameMotherPrimary->Divide(hInvMassAll);
+  TH1F *hRatioMassSameMotherToPrimary = (TH1F *)hInvMassSameMother->Clone("hRatioMassSameMotherToPrimary");
+  hRatioMassSameMotherToPrimary->Divide(hInvMassPrimary);
+  for (Int_t i = 1; i <= hRatioSameMotherPrimary->GetNbinsX(); i++)
+  {
+    hRatioPrimaryAll->SetBinError(i, SetEfficiencyError(hRelDistancePrimary->GetBinContent(i), hRelDistanceAll->GetBinContent(i)));
+    hRatioSameMotherToPrimary->SetBinError(i, SetEfficiencyError(hRelDistanceSameMother->GetBinContent(i), hRelDistancePrimary->GetBinContent(i)));
+    hRatioSameMotherPrimary->SetBinError(i, SetEfficiencyError(hRelDistanceSameMother->GetBinContent(i), hRelDistanceAll->GetBinContent(i)));
+  }
+  for (Int_t i = 1; i <= hRatioMassSameMotherPrimary->GetNbinsX(); i++)
+  {
+    hRatioMassPrimaryAll->SetBinError(i, SetEfficiencyError(hInvMassPrimary->GetBinContent(i), hInvMassAll->GetBinContent(i)));
+    hRatioMassSameMotherToPrimary->SetBinError(i, SetEfficiencyError(hInvMassSameMother->GetBinContent(i), hInvMassPrimary->GetBinContent(i)));
+    hRatioMassSameMotherPrimary->SetBinError(i, SetEfficiencyError(hInvMassSameMother->GetBinContent(i), hInvMassAll->GetBinContent(i)));
+  }
+
+  // Maximum expected spin-spin correlation
+  float Rss = (float)NprimSM / Npairs;
+  float maxCorrelationOnlyPrimary = 1. / 3 * (Ps * Ps * Rss);
+  float maxCorrelationOnlyPrimary_BJ = 1. / 3 * (PBJs * PBJs * Rss);
+  cout << "\nMaximum expected spin-spin correlation considering only primary pairs: " << endl;
+  cout << "SU(6) model: " << maxCorrelationOnlyPrimary << endl;
+  cout << "Burkardt-Jaffe model: " << maxCorrelationOnlyPrimary_BJ << endl;
+  TH1F *hMaxCorrelation = (TH1F *)hRatioSameMotherPrimary->Clone("hMaxCorrelation");
+  TH1F *hMaxCorrelationBJ = (TH1F *)hRatioSameMotherPrimary->Clone("hMaxCorrelationBJ");
+  for (Int_t i = 1; i <= hMaxCorrelation->GetNbinsX(); i++)
+  {
+    hMaxCorrelation->SetBinContent(i, 1. / 3 * hRatioSameMotherPrimary->GetBinContent(i) * Ps * Ps);
+    hMaxCorrelation->SetBinError(i, 1. / 3 * hRatioSameMotherPrimary->GetBinError(i) * Ps * Ps);
+    hMaxCorrelationBJ->SetBinContent(i, 1. / 3 * hRatioSameMotherPrimary->GetBinContent(i) * PBJs * PBJs);
+    hMaxCorrelationBJ->SetBinError(i, 1. / 3 * hRatioSameMotherPrimary->GetBinError(i) * PBJs * PBJs);
+  }
+
+  // Plotting
   TCanvas *fractionCanvas = new TCanvas("fractionCanvas", "Fraction Canvas", 1200, 800);
   StyleCanvas(fractionCanvas, 0.03, 0.15, 0.18, 0.03);
   TH1F *hDummyFraction = new TH1F("hDummyFraction", "Fraction of pairs", 3, -0.5, 2.5);
@@ -333,6 +401,26 @@ void plotHistos(int cmEnergyGeV = 13600, int nEvents = 1000, float ymax = 0.5)
   fracRelDistanceCanvas->SaveAs("../FractionPrimaryPairs_RelDistance.png");
   fracRelDistanceCanvas->SaveAs("../FractionPrimaryPairs_RelDistance.eps");
 
+  TCanvas *SomeMotherToPrimCanvas = new TCanvas("SomeMotherToPrimCanvas", "Fraction of some mother to primary pairs", 800, 600);
+  StyleCanvas(SomeMotherToPrimCanvas, 0.03, 0.15, 0.18, 0.03);
+  TH1F *hDummyFracRelDistance2 = (TH1F *)hDummyFracRelDistance->Clone("hDummyFracRelDistance2");
+  hDummyFracRelDistance2->GetXaxis()->SetRangeUser(0, 3.49);
+  hDummyFracRelDistance2->GetYaxis()->SetRangeUser(0, 1);
+  hDummyFracRelDistance2->GetYaxis()->SetTitle("Fraction");
+  StyleHisto(hRatioSameMotherToPrimary, 0, 1, kGreen + 1, 20, TitleRelDistance, "", "", 1, 1.15, 1.6);
+  SomeMotherToPrimCanvas->cd();
+  hDummyFracRelDistance2->Draw("");
+  hRatioSameMotherToPrimary->Draw("same");
+  TLegend *legendSomeMotherToPrim = new TLegend(0.23, 0.23, 0.53, 0.52);
+  legendSomeMotherToPrim->SetFillStyle(0);
+  legendSomeMotherToPrim->SetTextAlign(12);
+  legendSomeMotherToPrim->SetTextSize(0.04);
+  legendSomeMotherToPrim->AddEntry(hRatioSameMotherToPrimary, "Primary pairs from same mother / Primary pairs", "pl");
+  legendSomeMotherToPrim->Draw("");
+  SomeMotherToPrimCanvas->SaveAs("../FractionSMToPrimaryPairs_RelDistance.pdf");
+  SomeMotherToPrimCanvas->SaveAs("../FractionSMToPrimaryPairs_RelDistance.png");
+  SomeMotherToPrimCanvas->SaveAs("../FractionSMToPrimaryPairs_RelDistance.eps");
+
   TCanvas *fracInvMassCanvas = new TCanvas("fracInvMassCanvas", "Fraction of Primary Pairs", 800, 600);
   StyleCanvas(fracInvMassCanvas, 0.03, 0.15, 0.18, 0.03);
   TH1F *hDummyFracInvMass = (TH1F *)hPairInvMass->Clone("hDummyFracInvMass");
@@ -359,9 +447,46 @@ void plotHistos(int cmEnergyGeV = 13600, int nEvents = 1000, float ymax = 0.5)
   fracInvMassCanvas->SaveAs("../FractionPrimaryPairs_InvMass.png");
   fracInvMassCanvas->SaveAs("../FractionPrimaryPairs_InvMass.eps");
 
+  TCanvas *maxCorrCanvas = new TCanvas("maxCorrCanvas", "Maximum Spin-Spin Correlation", 800, 600);
+  StyleCanvas(maxCorrCanvas, 0.03, 0.15, 0.18, 0.03);
+  TH1F *hDummyMaxCorr = (TH1F *)hRelativeDistance->Clone("hDummyMaxCorr");
+  hDummyMaxCorr->Reset();
+  SetFont(hDummyMaxCorr);
+  StyleHisto(hDummyMaxCorr, 0, 0.05, 1, 1, TitleRelDistance, "Maximum Spin-Spin Correlation", "", 1, 1.15, 1.6);
+  SetHistoTextSize(hDummyMaxCorr, xTitle, xLabel, xOffset, xLabelOffset, yTitle, yLabel, yOffset, yLabelOffset);
+  SetTickLength(hDummyMaxCorr, tickX, tickY);
+  hDummyMaxCorr->GetXaxis()->SetRangeUser(0, 3.49);
+  hDummyMaxCorr->GetYaxis()->SetRangeUser(0, 0.02);
+  StyleHisto(hMaxCorrelation, 0, 0.05, kOrange + 1, 33, TitleRelDistance, "Maximum Spin-Spin Correlation", "", 1, 1.15, 1.6);
+  StyleHisto(hMaxCorrelationBJ, 0, 0.05, kMagenta + 1, 20, TitleRelDistance, "Maximum Spin-Spin Correlation", "", 1, 1.15, 1.6);
+  maxCorrCanvas->cd();
+  hDummyMaxCorr->Draw("");
+  // hMaxCorrelation->Draw("same");
+  hMaxCorrelationBJ->Draw("same");
+  TLegend *legendMaxCorr = new TLegend(0.23, 0.73, 0.53, 0.92);
+  legendMaxCorr->SetFillStyle(0);
+  legendMaxCorr->SetTextAlign(12);
+  legendMaxCorr->SetTextSize(0.04);
+  // legendMaxCorr->AddEntry(hMaxCorrelation, "SU(6) model", "pl");
+  legendMaxCorr->AddEntry(hMaxCorrelationBJ, "Burkardt-Jaffe model", "pl");
+  legendMaxCorr->Draw("");
+  maxCorrCanvas->SaveAs("../MaxSpinSpinCorrelation_RelDistance.pdf");
+  maxCorrCanvas->SaveAs("../MaxSpinSpinCorrelation_RelDistance.png");
+  maxCorrCanvas->SaveAs("../MaxSpinSpinCorrelation_RelDistance.eps");
+
+  // float maxCorrelation = 1. / 3 * (
+  // Ps * Ps * Rss + Ps * PSigma0 * RsSigma0 + Ps * PXi0 * RsXi0 + Ps * PXiMinus * RsXiMinus + Ps * PSigmaStar * RsSigmaStar + PPBJs + PSigma0 * PBJSigma0 + PXi0 * PBJXi0 + PXiMinus * PBJXiMinus + PSigmaStar * PBJS);
+
   // write to output file
-  TString Sfileout = Form("../PlotDoubleLambdaHistos_%d.root", nEvents);
+  TString Sfileout = Form("../PlotDoubleLambdaHistos_%d_cmEnergy%d_ymax%.2f.root", nEvents, cmEnergyGeV, ymax);
   TFile *fout = new TFile(Sfileout, "recreate");
+  hMaxCorrelationBJ->Write();
+  hRatioSameMotherToPrimary->Write();
+  hRatioSameMotherPrimary->Write();
+  hRatioPrimaryAll->Write();
+  hInvMassSameMotherNorm->Write();
+  hInvMassPrimaryNorm->Write();
+  hInvMassAllNorm->Write();
   fout->cd();
 
   fout->Close();
